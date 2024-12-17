@@ -58,9 +58,11 @@ class BaseDataset(Dataset):
         data_dict = self._index[ind]
         data_path = data_dict["path"]
         data_object = self.load_object(data_path)
-        data_label = data_dict["label"]
 
-        instance_data = {"data_object": data_object, "labels": data_label}
+        data_latitude = data_dict["latitude"]
+        data_longitude = data_dict["longitude"]
+
+        instance_data = {"data_object": data_object, "latitude": data_latitude, "longitude": data_longitude}
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
@@ -142,10 +144,8 @@ class BaseDataset(Dataset):
             assert "path" in entry, (
                 "Each dataset item should include field 'path'" " - path to audio file."
             )
-            assert "label" in entry, (
-                "Each dataset item should include field 'label'"
-                " - object ground-truth label."
-            )
+            assert "latitude" in entry
+            assert "longitude" in entry
 
     @staticmethod
     def _sort_index(index):
