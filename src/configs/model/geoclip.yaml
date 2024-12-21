@@ -1,0 +1,4 @@
+_target_: src.model.GeoCLIP
+train_queue_size: 4096
+val_queue_size: 4096
+gps_gallery_filename: "coordinates_100K.csv"

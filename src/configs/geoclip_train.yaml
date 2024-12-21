@@ -1,24 +1,30 @@
 defaults:
-  - model: baseline
+  - model: geoclip
   - writer: wandb
-  - metrics: example
-  - datasets: example
-  - dataloader: example
-  - transforms: example
+  - metrics: main
+  - datasets: train
+  - dataloader: main
+  - transforms: main
   - _self_
 optimizer:
   _target_: torch.optim.Adam
-  lr: 3e-4
+  params:
+    - params: {model.image_encoder.parameters}
+      lr: 3e-4
+    - params: {model.location_encoder.parameters}
+  lr: 3e-5
+  weight_decay: 1e-6
+
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.StepLR
-  gamma: 0.9
+  gamma: 0.87
   step_size: ${trainer.epoch_len}
 loss_function:
-  _target_: src.loss.ExampleLoss
+  _target_: src.loss.CrossEntropyLossWrapper
 trainer:
   log_step: 50
-  n_epochs: 100
-  epoch_len: 500
+  n_epochs: 10
+  epoch_len: None
   device_tensors: ["data_object", "labels"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"

@@ -1,9 +1,9 @@
 defaults:
-  - model: baseline
-  - metrics: example
-  - datasets: example_eval # we do not want to run inference on training data
-  - dataloader: example
-  - transforms: example
+  - model: geoclip
+  - metrics: main
+  - datasets: eval # we do not want to run inference on training data
+  - dataloader: main
+  - transforms: main
   - _self_
 inferencer:
   device_tensors: ["data_object", "labels"] # which tensors should be on device (ex. GPU)

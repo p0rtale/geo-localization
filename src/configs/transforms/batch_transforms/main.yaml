@@ -1,0 +1,36 @@
+train:
+  images: # name of the tensor on which we apply transform
+    _target_: torch.nn.Sequential # to apply several transforms sequentially
+    _args_:
+      - _target_: torchvision.transforms.v2.RandomResizedCrop
+        size: 224
+      - _target_: torchvision.transforms.v2.RandomHorizontalFlip
+      - _target_: torchvision.transforms.v2.RandomApply
+        transforms:
+          _target_: torchvision.transforms.v2.ColorJitter
+          brightness: 0.4
+          contrast: 0.4
+          saturation: 0.4
+          hue: 0.1
+        p: 0.8
+      - _target_: torchvision.transforms.v2.RandomGrayscale
+        p: 0.2
+      - _target_: torchvision.transforms.v2.ConvertImageDtype
+        dtype: torch.float
+      - _target_: torchvision.transforms.v2.Normalize
+        mean: (0.485, 0.456, 0.406)
+        std: (0.229, 0.224, 0.225)
+
+inference:
+  images: # name of the tensor on which we apply transform
+    _target_: torch.nn.Sequential # to apply several transforms sequentially
+    _args_:
+      - _target_: torchvision.transforms.v2.Resize
+        size: 256
+      - _target_: torchvision.transforms.v2.CenterCrop
+        size: 224
+      - _target_: torchvision.transforms.v2.ConvertImageDtype
+        dtype: torch.float
+      - _target_: torchvision.transforms.v2.Normalize
+        mean: (0.485, 0.456, 0.406)
+        std: (0.229, 0.224, 0.225)
