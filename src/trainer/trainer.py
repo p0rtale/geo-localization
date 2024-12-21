@@ -1,8 +1,10 @@
+import torch
+
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 
 
-class Trainer(BaseTrainer):
+class GeoCLIPTrainer(BaseTrainer):
     """
     Trainer class. Defines the logic of batch logging and processing.
     """
@@ -34,6 +36,11 @@ class Trainer(BaseTrainer):
             metric_funcs = self.metrics["train"]
             self.optimizer.zero_grad()
 
+        gps_queue = self.model.get_gps_queue()
+        gps_all = torch.cat([batch["locations"], gps_queue], dim=0)
+        self.model.update_queue(batch["locations"])
+
+        batch["locations"] = gps_all
         outputs = self.model(**batch)
         batch.update(outputs)
 
