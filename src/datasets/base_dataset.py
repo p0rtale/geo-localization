@@ -2,6 +2,7 @@ import logging
 import random
 from typing import List
 
+import safetensors
 import torch
 from torch.utils.data import Dataset
 
@@ -57,12 +58,12 @@ class BaseDataset(Dataset):
         """
         data_dict = self._index[ind]
         data_path = data_dict["path"]
-        data_object = self.load_object(data_path)
+        image = self.load_image(data_path)
 
-        data_latitude = data_dict["latitude"]
-        data_longitude = data_dict["longitude"]
+        latitude = data_dict["latitude"]
+        longitude = data_dict["longitude"]
 
-        instance_data = {"data_object": data_object, "latitude": data_latitude, "longitude": data_longitude}
+        instance_data = {"image": image, "latitude": latitude, "longitude": longitude}
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
@@ -73,17 +74,16 @@ class BaseDataset(Dataset):
         """
         return len(self._index)
 
-    def load_object(self, path):
+    def load_image(self, path):
         """
-        Load object from disk.
+        Load image from disk.
 
         Args:
             path (str): path to the object.
         Returns:
-            data_object (Tensor):
+            img (Tensor):
         """
-        data_object = torch.load(path)
-        return data_object
+        return safetensors.torch.load_file(path)["tensor"]
 
     def preprocess_data(self, instance_data):
         """

@@ -14,12 +14,16 @@ def collate_fn(dataset_items: list[dict]):
             of the tensors.
     """
 
+    batch_size = len(dataset_items)
+
     result_batch = {}
 
-    result_batch["data_object"] = torch.vstack(
-        [elem["data_object"] for elem in dataset_items]
-    )
-    result_batch["latitudes"] = torch.tensor([elem["latitude"] for elem in dataset_items])
-    result_batch["longitudes"] = torch.tensor([elem["longitude"] for elem in dataset_items])
+    result_batch["images"] = torch.vstack([elem["image"] for elem in dataset_items])
+
+    latitudes = torch.tensor([elem["latitude"] for elem in dataset_items])
+    longitudes = torch.tensor([elem["longitude"] for elem in dataset_items])
+    result_batch["locations"] = torch.stack((latitudes, longitudes), dim=1)
+
+    result_batch["labels"] = torch.tensor([i for i in range(batch_size)]).long()
 
     return result_batch
