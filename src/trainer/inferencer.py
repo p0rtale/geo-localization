@@ -119,7 +119,7 @@ class Inferencer(BaseTrainer):
         batch = self.move_batch_to_device(batch)
         batch = self.transform_batch(batch)  # transform batch on device -- faster
 
-        outputs = self.model(**batch)
+        outputs = self.model(images=batch["images"], locations=self.model.gps_gallery)
         batch.update(outputs)
 
         if metrics is not None:
@@ -136,14 +136,14 @@ class Inferencer(BaseTrainer):
             # clone because of
             # https://github.com/pytorch/pytorch/issues/1995
             logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
+            location = batch["locations"][i].clone()
+            pred_location = self.model.gps_gallery[logits.argmax(dim=-1)]
 
             output_id = current_id + i
 
             output = {
-                "pred_label": pred_label,
-                "label": label,
+                "pred_location": pred_location,
+                "location": location,
             }
 
             if self.save_path is not None:
