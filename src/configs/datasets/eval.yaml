@@ -1,7 +1,4 @@
 val:
-  _target_: src.datasets.MediaEvalDataset
-  part: "val"
-  split: 0.99
+  _target_: src.datasets.Im2GPSDataset
   data_dir: "../dataset"
-  limit: 512
   instance_transforms: ${transforms.instance_transforms.inference}
