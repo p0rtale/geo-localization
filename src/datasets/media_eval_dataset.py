@@ -1,13 +1,17 @@
 import json
+import logging
 import os
 import random
 import shutil
+from pathlib import Path
 
 import pandas
-import wget
+import requests
 
 from src.datasets.base_dataset import BaseDataset
 from src.utils.io_utils import ROOT_PATH
+
+logger = logging.getLogger(__name__)
 
 URL_LINKS = {
     "mp16-images": "http://www.cis.jhu.edu/~shraman/TransLocator/Datasets/mp16_rgb_images.tgz",
@@ -16,7 +20,7 @@ URL_LINKS = {
 
 
 class MediaEvalDataset(BaseDataset):
-    def __init__(self, part, data_dir=None, split=0.99, *args, **kwargs):
+    def __init__(self, part, split=0.99, data_dir=None, *args, **kwargs):
         assert part in ("train", "val")
         self.part = part
         self.split = split
@@ -24,19 +28,21 @@ class MediaEvalDataset(BaseDataset):
         if data_dir is None:
             data_dir = ROOT_PATH / "data" / "datasets" / "mp16"
             data_dir.mkdir(exist_ok=True, parents=True)
-        self._data_dir = data_dir
+        self._data_dir = ROOT_PATH / data_dir
         self._images_dir = (
             self._data_dir / "r13_local_data" / "mp16" / "mp16_rgb_images"
         )
         self._annotations_path = self._data_dir / "annotations.csv"
 
+        logger.info("Building MP16 index...")
         index = self._get_or_load_index()
+        logger.info("MP16 dataset is ready")
 
         super().__init__(index, *args, **kwargs)
 
     def _load_annotations(self):
         arch_path = self._data_dir / "annotations.zip"
-        wget.download(URL_LINKS["mp16-annotations"], str(arch_path))
+        self._load_data(URL_LINKS["mp16-annotations"], str(arch_path))
         shutil.unpack_archive(arch_path, self._data_dir)
         shutil.move(
             str(self._data_dir / "Annotations" / "mp16_places365.csv"),
@@ -47,16 +53,23 @@ class MediaEvalDataset(BaseDataset):
 
     def _load_images(self):
         arch_path = self._data_dir / "images.zip"
-        wget.download(URL_LINKS["mp16-images"], str(arch_path))
+        self._load_data(URL_LINKS["mp16-images"], str(arch_path))
         shutil.unpack_archive(arch_path, self._data_dir)
         os.remove(str(arch_path))
+
+    def _load_data(self, link, path):
+        response = requests.get(link, stream=True)
+        response.raise_for_status()
+
+        with open(path, "wb") as f:
+            f.write(response.content)
 
     def _create_index(self):
         if not self._annotations_path.exists():
             self._load_annotations()
 
         annotations_df = pandas.read_csv(
-            self.annotations_path,
+            self._annotations_path,
             usecols=["IMG_ID", "LAT", "LON"],
             dtype={"LAT": "float64", "LON": "float64"},
         )
@@ -67,6 +80,10 @@ class MediaEvalDataset(BaseDataset):
         annotations_df["path"] = annotations_df["path"].apply(
             lambda path: f"{str(self._images_dir.absolute().resolve())}/{path}"
         )
+
+        annotations_df = annotations_df[
+            annotations_df.apply(lambda x: Path(x["path"]).exists(), axis=1)
+        ]
 
         annotations_list = annotations_df.to_dict(orient="records")
 

@@ -18,7 +18,9 @@ def collate_fn(dataset_items: list[dict]):
 
     result_batch = {}
 
-    result_batch["images"] = torch.vstack([elem["image"] for elem in dataset_items])
+    result_batch["images"] = torch.stack(
+        [elem["image"] for elem in dataset_items], dim=0
+    )
 
     latitudes = torch.tensor([elem["latitude"] for elem in dataset_items])
     longitudes = torch.tensor([elem["longitude"] for elem in dataset_items])

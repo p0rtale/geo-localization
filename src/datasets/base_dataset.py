@@ -2,8 +2,7 @@ import logging
 import random
 from typing import List
 
-import safetensors
-import torch
+from PIL import Image
 from torch.utils.data import Dataset
 
 logger = logging.getLogger(__name__)
@@ -83,7 +82,7 @@ class BaseDataset(Dataset):
         Returns:
             img (Tensor):
         """
-        return safetensors.torch.load_file(path)["tensor"]
+        return Image.open(path).convert("RGB")
 
     def preprocess_data(self, instance_data):
         """
