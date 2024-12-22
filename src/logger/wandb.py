@@ -228,3 +228,6 @@ class WandBWriter:
 
     def add_embedding(self, embedding_name, embedding):
         raise NotImplementedError()
+
+    def finish(self):
+        self.wandb.finish()

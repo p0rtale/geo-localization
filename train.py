@@ -48,8 +48,9 @@ def main(config):
     # build optimizer, learning rate scheduler
     # TODO: Abstract it
     optimizer_params = [
-        {"params": model.image_encoder.parameters(), "lr": 3e-4},
+        {"params": [model.logit_scale]},
         {"params": model.location_encoder.parameters()},
+        {"params": model.image_encoder.parameters(), "lr": 3e-4},
     ]
 
     for group_param in optimizer_params:
@@ -81,6 +82,8 @@ def main(config):
     )
 
     trainer.train()
+
+    writer.finish()
 
 
 if __name__ == "__main__":
