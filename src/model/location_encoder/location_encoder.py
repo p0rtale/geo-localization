@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 
-from src.model.location_encoder import GaussianEncoding, equal_earth_projection
+from src.model.location_encoder.equal_earth_projection import equal_earth_projection
+from src.model.location_encoder.gaussian_encoding import GaussianEncoding
 
 
 class LocationEncoderCapsule(nn.Module):

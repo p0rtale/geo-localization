@@ -7,16 +7,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 
+from src.model.image_encoder import ImageEncoder
+from src.model.location_encoder import LocationEncoder
 from src.utils.io_utils import ROOT_PATH
-
-from .image_encoder import ImageEncoder
-from .location_encoder import LocationEncoder
 
 
 class GeoCLIP(nn.Module):
     def __init__(
         self,
-        from_pretrained=True,
         train_queue_size=4096,
         val_queue_size=4096,
         gps_gallery_filename="coordinates_100K.csv",
@@ -28,17 +26,18 @@ class GeoCLIP(nn.Module):
         self.location_encoder = LocationEncoder()
 
         self.gps_gallery = self._load_gps_data(
-            ROOT_PATH / "gps_gallery" / gps_gallery_filename
+            ROOT_PATH / "src" / "model" / "gps_gallery" / gps_gallery_filename
         )
 
         self.train_queue_size = train_queue_size
-        self._initialize_gps_queue(train_queue_size, "train_queue")
+        self.register_buffer("train_queue", torch.randn(train_queue_size, 2))
+        self.train_queue = nn.functional.normalize(self.train_queue, dim=1)
+        self.register_buffer("train_queue_ptr", torch.zeros(1, dtype=torch.long))
 
         self.val_queue_size = val_queue_size
-        self._initialize_gps_queue(val_queue_size, "val_queue")
-
-        if from_pretrained:
-            self._load_weights("weights")
+        self.register_buffer("val_queue", torch.randn(val_queue_size, 2))
+        self.val_queue = nn.functional.normalize(self.val_queue, dim=1)
+        self.register_buffer("val_queue_ptr", torch.zeros(1, dtype=torch.long))
 
         self.device = "cpu"
 
@@ -56,21 +55,6 @@ class GeoCLIP(nn.Module):
         data = pd.read_csv(path)
         lat_lon = data[["LAT", "LON"]]
         return torch.tensor(lat_lon.values, dtype=torch.float32)
-
-    def _load_weights(self, path):
-        self.image_encoder.mlp.load_state_dict(
-            torch.load(f"{path}/image_encoder_mlp_weights.pth")
-        )
-        self.location_encoder.load_state_dict(
-            torch.load(f"{path}/location_encoder_weights.pth")
-        )
-        self.logit_scale = nn.Parameter(torch.load(f"{path}/logit_scale_weights.pth"))
-
-    def _initialize_gps_queue(self, queue_size, name):
-        self.register_buffer(name, torch.randn(queue_size, 2))
-        self.gps_queue = nn.functional.normalize(self.gps_queue, dim=1)
-
-        self.register_buffer(f"{name}_ptr", torch.zeros(1, dtype=torch.long))
 
     @torch.no_grad()
     def update_queue(self, gps_batch):
@@ -104,6 +88,9 @@ class GeoCLIP(nn.Module):
         if self.training:
             return self.train_queue
         return self.val_queue
+
+    def get_gps_gallery(self):
+        return self.gps_gallery
 
     def forward(self, images, locations, **batch):
         """
