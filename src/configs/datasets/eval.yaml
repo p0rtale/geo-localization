@@ -1,14 +1,7 @@
 val:
-  _target_: src.datasets.ExampleDataset
-  input_length: 1024
-  dataset_length: 15
-  n_classes: 10
-  name: "val"
-  instance_transforms: ${transforms.instance_transforms.inference}
-test:
-  _target_: src.datasets.ExampleDataset
-  input_length: 1024
-  dataset_length: 15
-  n_classes: 10
-  name: "test"
+  _target_: src.datasets.MediaEvalDataset
+  part: "val"
+  split: 0.99
+  data_dir: "../dataset"
+  limit: 512
   instance_transforms: ${transforms.instance_transforms.inference}

@@ -1,21 +1,18 @@
-device: "auto"
-train: # metrics that are calculated during training
-  - _target_: src.metrics.ExampleMetric
-    metric:
-      _target_: torchmetrics.classification.MulticlassAccuracy
-      num_classes: 10
-    device: ${metrics.device}
-    name: "TRAIN_MulticlassAccuracy" # just an example to see difference
-inference: # metrics that are calculated during inference (eval)
-  - _target_: src.metrics.ExampleMetric
-    metric:
-      _target_: torchmetrics.classification.MulticlassAccuracy
-      num_classes: 10
-    device: ${metrics.device}
-    name: "MulticlassAccuracy"
-  - _target_: src.metrics.ExampleMetric
-    metric:
-      _target_: torchmetrics.classification.MulticlassAccuracy
-      num_classes: 10
-    device: ${metrics.device}
-    name: "MulticlassAccuracy2.0"
+train: []
+val: []
+inference:
+  - _target_: src.metrics.ThresholdMetric
+    name: "Accuracy_1_km"
+    threshold: 1
+  - _target_: src.metrics.ThresholdMetric
+    name: "Accuracy_25_km"
+    threshold: 25
+  - _target_: src.metrics.ThresholdMetric
+    name: "Accuracy_200_km"
+    threshold: 200
+  - _target_: src.metrics.ThresholdMetric
+    name: "Accuracy_750_km"
+    threshold: 750
+  - _target_: src.metrics.ThresholdMetric
+    name: "Accuracy_2500_km"
+    threshold: 2500
