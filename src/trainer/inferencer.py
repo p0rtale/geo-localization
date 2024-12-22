@@ -122,6 +122,9 @@ class Inferencer(BaseTrainer):
         outputs = self.model(images=batch["images"], locations=self.model.gps_gallery)
         batch.update(outputs)
 
+        gallery_classes = batch["logits"].argmax(dim=-1)
+        batch["pred_locations"] = self.model.gps_gallery[gallery_classes]
+
         if metrics is not None:
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
@@ -135,9 +138,8 @@ class Inferencer(BaseTrainer):
         for i in range(batch_size):
             # clone because of
             # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
+            pred_location = batch["pred_locations"][i].clone()
             location = batch["locations"][i].clone()
-            pred_location = self.model.gps_gallery[logits.argmax(dim=-1)]
 
             output_id = current_id + i
 

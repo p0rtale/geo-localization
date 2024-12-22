@@ -125,7 +125,7 @@ class BaseTrainer:
         )
         self.evaluation_metrics = MetricTracker(
             *self.config.writer.loss_names,
-            *[m.name for m in self.metrics["inference"]],
+            *[m.name for m in self.metrics["val"]],
             writer=self.writer,
         )
 
@@ -172,7 +172,7 @@ class BaseTrainer:
 
             # print logged information to the screen
             for key, value in logs.items():
-                self.logger.info(f"    {key:15s}: {value}")
+                self.logger.info(f"    {key: 15s}: {value}")
 
             # evaluate model performance according to configured metric,
             # save best checkpoint as model_best
@@ -239,6 +239,9 @@ class BaseTrainer:
                 self.train_metrics.reset()
             if batch_idx + 1 >= self.epoch_len:
                 break
+
+        if self.lr_scheduler is not None:
+            self.lr_scheduler.step()
 
         logs = last_train_metrics
 
