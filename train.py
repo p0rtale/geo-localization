@@ -6,7 +6,7 @@ from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 from src.datasets.data_utils import get_dataloaders
-from src.trainer import Trainer
+from src.trainer import GeoCLIPTrainer
 from src.utils.init_utils import set_random_seed, setup_saving_and_logging
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -46,17 +46,25 @@ def main(config):
     metrics = instantiate(config.metrics)
 
     # build optimizer, learning rate scheduler
-    for group_param in config.optimizer.params:
-        group_param["params"] = filter(lambda p: p.requires_grad, group_param["params"])
+    # TODO: Abstract it
+    optimizer_params = [
+        {"params": model.image_encoder.parameters(), "lr": 3e-4},
+        {"params": model.location_encoder.parameters()},
+    ]
 
-    optimizer = instantiate(config.optimizer)
+    for group_param in optimizer_params:
+        group_param["params"] = list(
+            filter(lambda p: p.requires_grad, group_param["params"])
+        )
+
+    optimizer = instantiate(config.optimizer, optimizer_params)
     lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer)
 
     # epoch_len = number of iterations for iteration-based training
     # epoch_len = None or len(dataloader) for epoch-based training
     epoch_len = config.trainer.get("epoch_len")
 
-    trainer = Trainer(
+    trainer = GeoCLIPTrainer(
         model=model,
         criterion=loss_function,
         metrics=metrics,
